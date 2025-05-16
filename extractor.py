@@ -1,9 +1,6 @@
 import argparse
 import re
 from PyPDF2 import PdfReader
-from reportlab.lib.pagesizes import letter
-from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer
-from reportlab.lib.styles import getSampleStyleSheet
 
 def extract_words_from_pdf(pdf_path):
     """Extract and return all words with comprehensive pattern matching."""
