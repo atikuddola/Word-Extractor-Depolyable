@@ -9,8 +9,11 @@
         <p><strong>Unique words:</strong> {{ word_count }}</p>
     </div>
     
-    <a href="{{ url_for('download', session_id=session_id) }}" class="btn">Download as PDF</a>
-    <a href="{{ url_for('index') }}" style="margin-left: 10px;">Extract another PDF</a>
+    <textarea id="wordsList" style="display: none;">{% for word in words %}{{ word }}
+{% endfor %}</textarea>
+    
+    <button id="copyBtn" class="btn">Copy All Words</button>
+    <a href="{{ url_for('index') }}" class="btn" style="margin-left: 10px;">Extract Another PDF</a>
     
     <h2>Extracted Words</h2>
     <div class="word-list">
@@ -19,4 +22,21 @@
         {% endfor %}
     </div>
 </div>
+
+<script>
+    document.getElementById('copyBtn').addEventListener('click', function() {
+        var textarea = document.getElementById('wordsList');
+        textarea.style.display = 'block';
+        textarea.select();
+        
+        try {
+            document.execCommand('copy');
+            alert('Words copied to clipboard!');
+        } catch (err) {
+            alert('Failed to copy. Please try a modern browser.');
+        }
+        
+        textarea.style.display = 'none';
+    });
+</script>
 {% endblock %}

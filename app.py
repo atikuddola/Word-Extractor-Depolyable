@@ -1,9 +1,9 @@
 import os
 import datetime
-from flask import Flask, request, render_template, redirect, url_for, flash, send_file, session
+from flask import Flask, request, render_template, redirect, url_for, flash, jsonify, session
 from werkzeug.utils import secure_filename
 import tempfile
-from extractor import extract_words_from_pdf, save_words_to_pdf
+from extractor import extract_words_from_pdf
 
 app = Flask(__name__)
 app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY', 'dev-key-for-flask')
@@ -47,44 +47,50 @@ def index():
             # Remove duplicates and sort
             unique_words = sorted(set(words))
             
-            # Create a temporary file for the output PDF
-            output_fd, output_path = tempfile.mkstemp(suffix='.pdf')
-            os.close(output_fd)
-            
-            # Save words to PDF
-            save_words_to_pdf(unique_words, output_path)
-            
-            # Store the output path in a temporary dictionary
-            session_id = os.path.basename(output_path)
-            # Use a global dictionary to store paths (for Vercel compatibility)
-            if not hasattr(app, 'temp_files'):
-                app.temp_files = {}
-            app.temp_files[session_id] = output_path
+            # Clean up the uploaded file
+            try:
+                os.remove(filepath)
+            except:
+                pass  # Ignore errors in cleanup
             
             return render_template('result.html', 
                                    words=unique_words, 
                                    word_count=len(unique_words),
-                                   total_words=len(words),
-                                   session_id=session_id)
+                                   total_words=len(words))
     
     return render_template('index.html')
 
-@app.route('/download/<session_id>')
-def download(session_id):
-    if not hasattr(app, 'temp_files'):
-        app.temp_files = {}
-    output_path = app.temp_files.get(session_id)
-    if not output_path or not os.path.exists(output_path):
-        flash('File not found or expired')
-        return redirect(url_for('index'))
-    
-    return send_file(output_path, as_attachment=True, download_name='extracted_words.pdf')
-
-# Add cleanup for temporary files
-@app.teardown_appcontext
-def cleanup(exception):
-    # Remove temporary files older than 1 hour
-    pass  # Implement if needed
+# Add an API endpoint to get words as JSON (useful for potential future enhancements)
+@app.route('/api/words', methods=['POST'])
+def api_words():
+    if 'file' not in request.files:
+        return jsonify({'error': 'No file part'}), 400
+        
+    file = request.files['file']
+    if file.filename == '':
+        return jsonify({'error': 'No selected file'}), 400
+        
+    if file and allowed_file(file.filename):
+        filename = secure_filename(file.filename)
+        filepath = os.path.join(app.config['UPLOAD_FOLDER'], filename)
+        file.save(filepath)
+        
+        # Extract words from the PDF
+        words = extract_words_from_pdf(filepath)
+        # Remove duplicates and sort
+        unique_words = sorted(set(words))
+        
+        # Clean up the uploaded file
+        try:
+            os.remove(filepath)
+        except:
+            pass  # Ignore errors in cleanup
+            
+        return jsonify({
+            'words': unique_words,
+            'word_count': len(unique_words),
+            'total_words': len(words)
+        })
 
 # Handler for Vercel serverless function
 def handler(environ, start_response):
