@@ -1,0 +1,22 @@
+{% extends "layout.html" %}
+
+{% block title %}Extracted Words - PDF Word Extractor{% endblock %}
+
+{% block content %}
+<div class="result-section">
+    <div class="stats">
+        <p><strong>Total words found:</strong> {{ total_words }}</p>
+        <p><strong>Unique words:</strong> {{ word_count }}</p>
+    </div>
+    
+    <a href="{{ url_for('download', session_id=session_id) }}" class="btn">Download as PDF</a>
+    <a href="{{ url_for('index') }}" style="margin-left: 10px;">Extract another PDF</a>
+    
+    <h2>Extracted Words</h2>
+    <div class="word-list">
+        {% for word in words %}
+            <div class="word-item">{{ word }}</div>
+        {% endfor %}
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,16 @@
+{% extends "layout.html" %}
+
+{% block content %}
+<div class="upload-section">
+    <p>Upload a PDF file to extract unique words from it.</p>
+    
+    <form class="upload-form" method="POST" enctype="multipart/form-data">
+        <div>
+            <input type="file" name="file" accept=".pdf" required>
+        </div>
+        <div style="margin-top: 15px;">
+            <button type="submit" class="btn">Extract Words</button>
+        </div>
+    </form>
+</div>
+{% endblock %}
